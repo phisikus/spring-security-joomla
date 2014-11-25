@@ -1,0 +1,58 @@
+<beans:beans xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xmlns="http://www.springframework.org/schema/security"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context-4.0.xsd
+	http://www.springframework.org/schema/security
+	http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+
+    <global-method-security secured-annotations="enabled"/>
+
+    <context:property-placeholder location="classpath:config.properties"/>
+
+    <!-- This bean provides information about users -->
+    <beans:bean id="joomlaUserDetailsService"
+                class="pl.weimaraner.klub.baza.joomla.auth.user.JoomlaUserDetailsService"/>
+
+    <authentication-manager alias="authenticationManager">
+        <authentication-provider user-service-ref="joomlaUserDetailsService"/>
+    </authentication-manager>
+
+
+    <!-- In this implementation UsernamePasswordAuthenticationFilter which checks if username/password are correct
+         is "replaced" by JoomlaAuthenticationProcessingFilter which checks Joomla's session cookies and verifies them
+         with database. Since there is no reason to show login form - authorizationEntryPoint redirects straight to
+         verification. Typically url would be /j_security_check, but we are using /authorize_joomla.
+         Keep in mind that we are having our own session.-->
+
+    <beans:bean id="joomlaAuthenticationProcessingFilter"
+                class="pl.weimaraner.klub.baza.joomla.auth.JoomlaAuthenticationProcessingFilter">
+        <beans:property name="authenticationManager" ref="authenticationManager"/>
+        <beans:property name="redirectIfFailedUrl" value="${joomla.login_page.url}"/>
+    </beans:bean>
+
+    <http auto-config="false" use-expressions="true" entry-point-ref="authorizationEntryPoint">
+        <!-- index.jsp can be accessed by anyone -->
+        <intercept-url pattern="/index.jsp" access="isAuthenticated()"/>
+
+        <!-- admin.jsp should be accessed only by users from 'Super Users' group. -->
+        <intercept-url pattern="/admin.jsp" access="hasAuthority('Super Users')"/>
+
+        <custom-filter ref="joomlaAuthenticationProcessingFilter" position="FORM_LOGIN_FILTER"/>
+        <access-denied-handler error-page="${joomla.access_denied.url}"/>
+
+				<!-- After logging out we might want to do the same in joomla -->
+        <logout invalidate-session="true" logout-url="/logout" logout-success-url="${joomla.logout_page.url}"/>
+    </http>
+
+
+    <beans:bean id="authorizationEntryPoint"
+                class="org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint">
+        <beans:property name="loginFormUrl" value="/authorize_joomla"/>
+    </beans:bean>
+
+
+</beans:beans>

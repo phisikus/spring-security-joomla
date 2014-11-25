@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd">
+
+    <!-- Database -->
+
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource"
+          p:driverClassName="${jdbc.driverClassName}"
+          p:url="${jdbc.url}"
+          p:username="${jdbc.username}"
+          p:password="${jdbc.password}">
+    </bean>
+
+    <!-- Hibernate configuration -->
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="hibernateProperties">
+            <props>
+                <!-- Hibernate options should be simple and prevent any database locks and concurency problems, since we have database shared with Joomla -->
+                <prop key="hibernate.dialect">${hibernate.dialect}</prop>
+                <prop key="hibernate.hbm2ddl.auto"/>
+                <prop key="hibernate.cache.use_second_level_cache">${hibernate.cache.use_second_level_cache}</prop>
+                <prop key="hibernate.connection.release_mode">${hibernate.connection.release_mode}</prop>
+                <prop key="javax.persistence.validation.mode">NONE</prop>
+            </props>
+        </property>
+        <property name="namingStrategy" ref="joomlaNamingStrategy"/>
+        <property name="packagesToScan" value="pl.weimaraner.klub.baza"/>
+    </bean>
+
+    <bean id="joomlaNamingStrategy" class="pl.weimaraner.klub.baza.joomla.utils.JoomlaTableNamingStrategy">
+        <constructor-arg name="databaseTablePrefix" value="${joomla.table_prefix}"/>
+    </bean>
+
+    <bean id="transactionManager"
+          class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+    <tx:annotation-driven proxy-target-class="true" transaction-manager="transactionManager"/>
+</beans>

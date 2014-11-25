@@ -7,10 +7,7 @@ This project provides implementation that allows Spring Security to use Joomla's
 
 How is it done?
 ----------------------
-1. User is entering website.
-2. Joomla creates session cookie.
-3. User is logging in.
-4. Joomla saves information about cookie and username in database.
+Joomla is creating a session cookie before user even tries to log in. After successful authorization this cookie becomes associated with user's account. To remember that state Joomla stores information about all session cookies in database.
 
 When user is entering secured controller/resource in Spring application, there is no need to ask about login/password since it is possible to use "verified" cookie as a token to authenticate Spring Security session. From that point information about user will be retrieved (*UserDetails*) and also groups that this user is a member of (*GrantedAuthorities*)...
 

@@ -18,9 +18,12 @@ Implementation uses *hibernate* to retrieve data.
 
 Usage
 ----------------------
+
 There are two Maven projects:
 * **spring-security-joomla-provider** - core library
 * **spring-security-joomla-provider-example** - example application
+
+Example application shows how to use core library and should give some hints related to context configuration.
 
 1. Build & install core library
   
